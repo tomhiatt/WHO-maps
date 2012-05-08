@@ -1,7 +1,11 @@
 # Tom Hiatt
 # 8 May 2012
-# Function for created slide-worthy WHO maps
+# Function for creating WHO maps
 
+# ----------------------------------------------------------
+# A slide-worthy WHO map
+# ----------------------------------------------------------
+  
 WHOmap.slide <- function(data, map.title, legend.title, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=getwd(), na.label='No data') {
   
   # tests to make sure inputs are right
