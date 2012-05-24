@@ -92,6 +92,7 @@ WHOmap.slide <- function(data, map.title, legend.title, low.color='#BDD7E7',  hi
          legend.position=c(0.65, 0.45), legend.justification= c(0,1),
          legend.title=theme_text(size=17, hjust=0), panel.border=theme_blank())
   print(plot)
+  return(plot)
   
   cat("Here you go. You can save it with ggsave if you'd like.")
   
