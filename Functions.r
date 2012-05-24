@@ -50,7 +50,7 @@ WHOmap.slide <- function(data, map.title, legend.title, low.color='#BDD7E7',  hi
   
   pol1 <- geom_polygon(data=gworld, aes(group = group), colour = "grey50", fill = NA)   # A layer to map all countries (so none are missing.)
   pol2 <- geom_polygon(data = subset(gpoly, id=="Lakes"), aes(group = group), fill = I("white"), colour = "grey50") 	# Adds the polygon layer
-  pol3 <- geom_polygon(data = subset(gpoly, id=="Jammu and Kashmir"), aes(group = group), fill = I("grey75"), colour = "grey50", linetype="dashed")  # To color Jammu Kashmir 
+  pol3 <- geom_polygon(data = subset(gpoly, id=="Jammu and Kashmir"), aes(group = group), fill = I("grey75"), colour = "grey50")  # To color Jammu Kashmir 
   pol4 <- geom_polygon(data = subset(gpoly, id=="Abyei"), aes(group = group), fill = I("grey75"), colour = "grey50", linetype="dotted")  # To color Abyei
   pol5 <-	geom_polygon(data = gworld[gworld$id=='EH',], aes(group = group), fill = I("grey75"), colour = "grey50")  # To color Western Sahara
   lin1 <- geom_path(data = subset(gline, id %in% 2), aes(group = group), colour = "grey50") 					# solid black lines
@@ -146,7 +146,7 @@ WHOmap.print <- function(data, map.title, legend.title, low.color='#BDD7E7',  hi
   
   pol1 <- geom_polygon(data=gworld, aes(group = group), colour = "grey50", fill = NA)   # A layer to map all countries (so none are missing.)
   pol2 <- geom_polygon(data = subset(gpoly, id=="Lakes"), aes(group = group), fill = I("white"), colour = "grey50") 	# Adds the polygon layer
-  pol3 <- geom_polygon(data = subset(gpoly, id=="Jammu and Kashmir"), aes(group = group), fill = I("grey75"), colour = "grey50", linetype="dashed")  # To color Jammu Kashmir 
+  pol3 <- geom_polygon(data = subset(gpoly, id=="Jammu and Kashmir"), aes(group = group), fill = I("grey75"), colour = "grey50")  # To color Jammu Kashmir 
   pol4 <- geom_polygon(data = subset(gpoly, id=="Abyei"), aes(group = group), fill = I("grey75"), colour = "grey50", linetype="dotted")  # To color Abyei
   pol5 <-	geom_polygon(data = gworld[gworld$id=='EH',], aes(group = group), fill = I("grey75"), colour = "grey50")  # To color Western Sahara
   lin1 <- geom_path(data = subset(gline, id %in% 2), aes(group = group), colour = "grey50") 					# solid black lines
@@ -194,6 +194,8 @@ WHOmap.print <- function(data, map.title, legend.title, low.color='#BDD7E7',  hi
          annotate("text", 70, -54, label=copyright, size=2, hjust=0)
   
   print(plot)
+  
+  return(plot)
   
   cat("Here you go. You can save it with ggsave if you'd like.")
   
