@@ -14,7 +14,7 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   if(nchar(map.title)>50) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
   if(max(nchar(levels(data[["cat"]]))) > 10) warning("Check if your categories are running into Australia. (I hate it when that happens.)")
   
-  if(any(names(data) %in% c("iso3", "cat"))==FALSE) stop("I need the data with just two columns labeled 'iso3' and 'cat' (for category).")
+  if(any(names(data) %in% c("iso3", "cat"))==FALSE) stop("I need the data with just two columns labeled 'iso3' and 'cat' (for category). The cut() function works well for continuous data.")
   if(!is.factor(data[["cat"]])) stop("I need you to make that cat column into a factor. (And order it in the order you want the legend to appear.)")
   
   #   OK let's get started!
@@ -107,17 +107,17 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
 # A print-worthy WHO map
 # ----------------------------------------------------------
 
-WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data') {
+WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50") {
   
   # tests to make sure inputs are right
   if(nchar(legend.title)>45) warning("You might want to try and trim your legend title a bit.")
   if(nchar(legend.title)>25 & any(grep("\\n", legend.title))==FALSE) warning("You might want to wrap that legend title a couple of times with '\\n'.") 
   if(nchar(map.title)>100) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
-  if(max(nchar(levels(data[["cat"]]))) > 20) warning("Check if your categories are running into Australia. (I hate it when that happens.)")
+  if(max(nchar(levels(data[["cat"]]))) > 20 & !any(grep('\n', levels(data[["cat"]])))) warning("Check if your categories are running into Australia. (I hate it when that happens.)")
   
   if(any(names(data) %in% c("iso3", "cat"))==FALSE) stop("I need the data with just two columns labeled 'iso3' and 'cat' (for category).")
-  if(!is.factor(data[["cat"]])) stop("I need you to make that cat column into a factor. (And order it in the order you want the legend to appear.)")
-  if(length(levels(data[["cat"]])) > 5) warning("You probably noticed your legend is dancing with the copyright. I can do up to 5 categories excluding NA.")
+  if(!is.factor(data[["cat"]])) stop("I need you to make that cat column into a factor. (And order it in the order you want the legend to appear.) The cut() function works well for continuous data.")
+  if(length(levels(data[["cat"]])) > 5 & copyright==TRUE) warning("You probably noticed your legend is dancing with the copyright. I can do up to 5 categories excluding NA.")
   
   #   OK let's get started!
   
@@ -136,8 +136,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   
   if(is.null(shapefiles.path)){
     library(whomap)
-  }
-  else({
+  }  else({
     old_path <- getwd()
     setwd (shapefiles.path)
     
@@ -155,26 +154,107 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   
   # Generic map parts
   
-  pol1 <- geom_polygon(data=gworld, aes(group = group), colour = "grey50", fill = NA)   # A layer to map all countries (so none are missing.)
-  pol2 <- geom_polygon(data = subset(gpoly, id=="Lakes"), aes(group = group), fill = I("white"), colour = "grey50") 	# Adds the polygon layer
-  pol3 <- geom_polygon(data = subset(gpoly, id=="Jammu and Kashmir"), aes(group = group), fill = I("grey75"), colour = "grey50")  # To color Jammu Kashmir 
-  pol4 <- geom_polygon(data = subset(gpoly, id=="Abyei"), aes(group = group), fill = I("grey75"), colour = "grey50", linetype="dotted")  # To color Abyei
-  pol5 <-	geom_polygon(data = gworld[gworld$id=='ESH',], aes(group = group), fill = I("grey75"), colour = "grey50")  # To color Western Sahara
-  lin1 <- geom_path(data = subset(gline, id %in% 2), aes(group = group), colour = "grey50") 					# solid black lines
-  lin2 <- geom_path(data = subset(gline, id %in% c(0,3,6,7)), aes(group = group), colour = "white", linetype = "dashed") 	# dashed white and black lines
-  lin3 <- geom_path(data = subset(gline, id %in% c(1,4,5)), aes(group = group), colour = "grey50", linetype = "dashed") 	# dashed black lines
-  lin4 <- geom_path(data = subset(gline, id %in% c(8)), aes(group = group), colour = "white", linetype = "dotted")   # dotted white lines (8 and 9 are the same!)
+#   drop lines that would be whited out. I'm doing this in two ways. 1-formulaically that matches points (and doesn't seem to be working), and 2-systematically bleeping out parts of polygons.
+  
+  # Method 1
+  dropends <- function(x){
+    xo <- x[x$order!=1 & x$order!=max(x$order),]
+    return(xo)
+  } 
+  ends <- function(x){
+    xo <- x[x$order==1 | x$order==max(x$order),]
+    return(xo)
+  }
+  wt1 <- subset(gline, id %in% c(0,3,6,7))
+  wt1$ll <- paste(round(wt1$long,10), round(wt1$lat,10), sep='')
+  wt2 <- ddply(wt1, "group", dropends)
+  wt2$ll <- paste(round(wt2$long,10), round(wt2$lat,10), sep='')
+  wt3 <- ddply(wt1, "group", ends)
+  
+#   separate polygons that have dashed parts
+  gworld2 <- gworld
+  gworld2$ll <- paste(round(gworld2$long,10), round(gworld2$lat,10), sep='')
+  gworld3 <- subset(gworld2, ll %in% wt2$ll)
+  gworldndash <- subset(gworld, !group %in% gworld3$group)
+  gworlddash <- subset(gworld2, group %in% gworld3$group & !ll %in% wt2$ll)
+
+  # break up polygons into continuous lines so they don't go over the dashed points
+  polypiece <- function(x){
+    if(x[1,'ll'] %in% wt3$ll){
+      x <- x[-nrow(x),]
+    } 
+    x$end <- ifelse(x$ll %in% wt3$ll, TRUE, FALSE)
+    gnum <- 1
+    x$group2 <- paste(x$group, gnum, sep='.')
+      for(ro in 2:nrow(x)){
+        
+        if(x[ro,'end'] & x[ro-1,'end']){
+          gnum <- gnum + 1
+          x[ro,'group2'] <- paste(x[ro,'group'], gnum, sep='.')
+          
+        } else x[ro,'group2'] <- paste(x[ro,'group'], gnum, sep='.')
+      }
+
+    return(x)
+  }
+  gworlddash2 <- ddply(gworlddash, 'id', polypiece)
+#   "EGY" "ISR" "JOR" "KOR" "PRK" "PSE" "SDN" "SSD"
+  
+  # Method 2
+  dashiso3s <- c("EGY", "ISR", "KOR", "PRK", "PSE", "SDN", "SSD")
+  gworldndash <- subset(gworld, !id %in% dashiso3s)
+  gworlddash <- subset(gworld, id %in% dashiso3s)
+  gworlddash$group2 <- as.character(gworlddash$group)
+  
+  SSD <- subset(gworlddash, !(long > 25 & lat < 13 & long < 34 & lat > 9) & id=='SSD')
+  SSD[24:27,'group2'] <- 'SSD.1.2'
+  SDN <- subset(gworlddash, !(long > 25 & lat < 13 & long < 34 & lat > 9) & !(long > 33.2 & lat < 23 & long < 35 & lat > 21.5) & id=='SDN')
+  SDN[14:31,'group2'] <- 'SDN.1.2'
+  SDN[32:33,'group2'] <- 'SDN.1.3'
+  EGY <- subset(gworlddash, !(long > 33.2 & lat < 23 & long < 35 & lat > 21.5) & id=='EGY')
+  EGY[13:15,'group2'] <- 'EGY.1.2'
+  ISR <- subset(gworlddash, !(long > 34.8 & lat < 32.6 & long < 35.4 & lat > 31.3) & !(long > 34.5 & lat < 31.55 & long < 34.6 & lat > 31.5) & id=='ISR')
+  ISR[7:15,'group2'] <- 'ISR.1.2'
+  ISR[16:18,'group2'] <- 'ISR.1.3'
+  PSE <- subset(gworlddash, id=='PSE')
+  PSE <- PSE[16:17,]
+  KOR <- subset(gworlddash, !(long > 127 & lat < 38.5 & long < 127.5 & lat > 38) & id=='KOR')
+  KOR <- KOR[1:10,]  
+  PRK <- subset(gworlddash, !(long > 127 & lat < 38.5 & long < 127.5 & lat > 38) & id=='PRK')
+  PRK[5:12,'group2'] <- 'PRK.1.2'
+  
+  gworlddash2 <- rbind(SSD, SDN, EGY, ISR, PSE, KOR, PRK)
+
+  # Create solid lines for Jammu Kashmir
+  jk1 <- subset(gpoly, id=="Jammu and Kashmir")
+  jk1$group2 <- as.character(jk1$group)
+  jk1[1:2,'group2'] <- 'Jammu and Kashmir.2'
+  jk1[8:16,'group2'] <- 'Jammu and Kashmir.3'
+  jk1[21:22,'group2'] <- 'Jammu and Kashmir.4'
+  jk2 <- subset(jk1, group2!='Jammu and Kashmir.1')
+
+  pol1 <- geom_polygon(data=gworldndash, aes(group = group), colour = line.color, fill = NA)   # A layer to map all countries (so none are missing.)
+  lin0 <- geom_path(data = gworlddash2, aes(group = group2), colour = line.color)
+  pol2 <- geom_polygon(data = subset(gpoly, id=="Lakes"), aes(group = group), fill = I("white"), colour = line.color) 	# Adds the polygon layer
+  pol3 <- geom_polygon(data = subset(gpoly, id=="Jammu and Kashmir"), aes(group = group), fill = I("grey75"), colour = NA)  # To color Jammu Kashmir 
+  pol4 <- geom_polygon(data = subset(gpoly, id=="Abyei"), aes(group = group), fill = I("grey75"), colour = line.color, linetype="dotted")  # To color Abyei
+  pol5 <-	geom_polygon(data = gworld[gworld$id=='ESH',], aes(group = group), fill = I("grey75"), colour = line.color)  # To color Western Sahara
+  lin1 <- geom_path(data = subset(gline, id %in% 2), aes(group = group), colour = line.color) 					# solid black lines
+  lin2 <- geom_path(data = subset(gline, id %in% c(0,3,6,7)), aes(group = group), colour = line.color, linetype = "dashed") 	# dashed white and black lines (now modified to be dashed lines over color of country)
+  lin3 <- geom_path(data = subset(gline, id %in% c(1,4,5)), aes(group = group), colour = line.color, linetype = "dashed") 	# dashed black lines
+#   lin4 <- geom_path(data = subset(gline, id %in% c(8)), aes(group = group), colour = "white", linetype = "dotted")   # dotted white lines (8 and 9 are the same!) I'm replacing this with a new line 4...
+  lin4 <- geom_path(data = jk2, aes(group = group2), colour = line.color)
   thm1 <- scale_y_continuous('', breaks = NULL) 
   thm2 <- scale_x_continuous('', breaks = NULL) 
   thm3 <- theme_bw()
   
 #   Copyright text
-  copyright <- "\uA9 World Health Organization 2011. All rights reserved. 
+  cright <- ifelse(copyright==FALSE, "", "\uA9 World Health Organization 2011. All rights reserved. 
   The designations employed and the presentation of the material in this publication do not 
   imply the expression of any opinion whatsoever on the part of the World Health Organization 
   concerning the legal status of any country, territory, city or area or of its authorities, 
   or concerning the delimitation of its frontiers or boundaries. Dotted and dashed lines on 
-  maps represent approximate borderlines for which there may not yet be full agreement."
+  maps represent approximate borderlines for which there may not yet be full agreement.")
   
   #   Get colors
   x <- seq(0, 1, length=length(levels(data[["cat"]])))
@@ -193,12 +273,19 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   # Plot map
   # ----------------------------------------------------
   
-  
-  windows (12,8)	
+ testing.plot <-  ggplot(toplot, aes(long, lat)) +  
+    #     geom_polygon(aes(group=group, fill=cat), colour=NA) +
+    lin0 + geom_point(data = subset(gline, id %in% c(0,3,6,7)), aes(group = group, colour = group)) +
+    coord_cartesian(xlim=c(125, 130), ylim=c(35, 40))#Koreas
+  coord_cartesian(xlim=c(30, 40), ylim=c(30, 35))#PSE
+  coord_cartesian(xlim=c(20, 40), ylim=c(0, 15))#sudan
+  coord_cartesian(xlim=c(30, 40), ylim=c(20, 25))#egypt
+  coord_cartesian(xlim=c(70, 85), ylim=c(30, 40)) # (g) Jammu and Kashmir/Aksai Chin dashed and grey
+	
   
   plot <-  ggplot(toplot, aes(long, lat)) +  
-    geom_polygon(aes(group=group, fill=cat)) +
-    pol1+pol2+pol3+pol4+pol5+lin1+lin2+lin3+lin4+thm1+thm2+thm3+
+    geom_polygon(aes(group=group, fill=cat), colour=NA) +
+    pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
     scale_fill_manual(legend.title, values=colors) +
     coord_cartesian(xlim = c(-180, 180)) +
@@ -207,9 +294,11 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
        legend.key.size = unit(0.50, "cm"), legend.text=theme_text(size=8), 
        legend.position=c(0.73, 0.41), legend.justification= c(0.5,1),
        legend.title=theme_text(size=10, hjust=0), panel.border=theme_blank()) +
-         annotate("text", 70, -54, label=copyright, size=2, hjust=0)
-  
+         annotate("text", 70, -54, label=cright, size=2, hjust=0) +
+if(show==TRUE) {
+  windows (12,8)
   print(plot)
+} 
   
   return(plot)
   

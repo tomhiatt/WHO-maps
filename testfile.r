@@ -7,14 +7,16 @@ dta <- subset(n, year==2010)
 dta$cat <- as.factor(dta$g_hbc22)
 
 dta <- n[n$year==2010,]
-dta$var <- cut(dta$tot_newrel,breaks=c(0,10,100,1000,10000,100000,Inf), right=FALSE) 
+dta$cat <- cut(dta$tot_newrel,breaks=c(0,10,100,1000,10000,100000,Inf), right=FALSE) 
 
-p <- WHOmap.slide(data=dta,legend.title="HBCs", map.title="High-burden countries",low.color="red")
+p <- WHOmap.print(data=dta,legend.title="HBCs", map.title="High-burden countries",low.color="red", line.color="black")
 WHOmap.print(dta)
 WHOmap.print(dta, shapefiles.path="C:/mapfiles/MapTemplate_generalized_2011/Shapefiles")
 
 
 p <- whomap(dta)
+p <- WHOmap.print(data=dta,legend.title="HBCs", map.title="High-burden countries",low.color="red", line.color="black")
+
 
 p + coord_cartesian(xlim=c(10, 40), ylim=c(-40, -20)) # Make sure South Africa doesn't cover up Lesotho and Swaziland
 p + coord_cartesian(xlim=c(-25, 0), ylim=c(20, 30)) # (a) Western Sahara in grey
