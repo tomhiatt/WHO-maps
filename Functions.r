@@ -107,7 +107,7 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
 # A print-worthy WHO map
 # ----------------------------------------------------------
 
-WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50") {
+WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50") {
   
   # tests to make sure inputs are right
   if(nchar(legend.title)>45) warning("You might want to try and trim your legend title a bit.")
@@ -154,53 +154,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   
   # Generic map parts
   
-#   drop lines that would be whited out. I'm doing this in two ways. 1-formulaically that matches points (and doesn't seem to be working), and 2-systematically bleeping out parts of polygons.
-  
-  # Method 1
-  dropends <- function(x){
-    xo <- x[x$order!=1 & x$order!=max(x$order),]
-    return(xo)
-  } 
-  ends <- function(x){
-    xo <- x[x$order==1 | x$order==max(x$order),]
-    return(xo)
-  }
-  wt1 <- subset(gline, id %in% c(0,3,6,7))
-  wt1$ll <- paste(round(wt1$long,10), round(wt1$lat,10), sep='')
-  wt2 <- ddply(wt1, "group", dropends)
-  wt2$ll <- paste(round(wt2$long,10), round(wt2$lat,10), sep='')
-  wt3 <- ddply(wt1, "group", ends)
-  
-#   separate polygons that have dashed parts
-  gworld2 <- gworld
-  gworld2$ll <- paste(round(gworld2$long,10), round(gworld2$lat,10), sep='')
-  gworld3 <- subset(gworld2, ll %in% wt2$ll)
-  gworldndash <- subset(gworld, !group %in% gworld3$group)
-  gworlddash <- subset(gworld2, group %in% gworld3$group & !ll %in% wt2$ll)
-
-  # break up polygons into continuous lines so they don't go over the dashed points
-  polypiece <- function(x){
-    if(x[1,'ll'] %in% wt3$ll){
-      x <- x[-nrow(x),]
-    } 
-    x$end <- ifelse(x$ll %in% wt3$ll, TRUE, FALSE)
-    gnum <- 1
-    x$group2 <- paste(x$group, gnum, sep='.')
-      for(ro in 2:nrow(x)){
-        
-        if(x[ro,'end'] & x[ro-1,'end']){
-          gnum <- gnum + 1
-          x[ro,'group2'] <- paste(x[ro,'group'], gnum, sep='.')
-          
-        } else x[ro,'group2'] <- paste(x[ro,'group'], gnum, sep='.')
-      }
-
-    return(x)
-  }
-  gworlddash2 <- ddply(gworlddash, 'id', polypiece)
-#   "EGY" "ISR" "JOR" "KOR" "PRK" "PSE" "SDN" "SSD"
-  
-  # Method 2
+#   drop lines that would be whited out. 
   dashiso3s <- c("EGY", "ISR", "KOR", "PRK", "PSE", "SDN", "SSD")
   gworldndash <- subset(gworld, !id %in% dashiso3s)
   gworlddash <- subset(gworld, id %in% dashiso3s)
@@ -257,11 +211,15 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   maps represent approximate borderlines for which there may not yet be full agreement.")
   
   #   Get colors
-  x <- seq(0, 1, length=length(levels(data[["cat"]])))
   
-  colors <- c(seq_gradient_pal(low.color, high.color)(x), 'grey90', 'grey75')
-  
-  
+  if(!is.null(colors) & length(levels(data[["cat"]]))!=length(colors)) stop('Your cats and colors don\'t match.')
+  if(is.null(colors)){
+    x <- seq(0, 1, length=length(levels(data[["cat"]])))
+    x1 <- seq_gradient_pal(low.color, high.color)(x)
+  } else x1 <- colors
+    
+  colors2 <- c(x1, 'grey90', 'grey75')
+    
   #   Merge data
   toplot <- merge(gworld, data, by.x = "id", by.y = "iso3", all.x=TRUE)  
   toplot <- toplot[order(toplot$order), ]
@@ -273,32 +231,22 @@ WHOmap.print <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   # Plot map
   # ----------------------------------------------------
   
- testing.plot <-  ggplot(toplot, aes(long, lat)) +  
-    #     geom_polygon(aes(group=group, fill=cat), colour=NA) +
-    lin0 + geom_point(data = subset(gline, id %in% c(0,3,6,7)), aes(group = group, colour = group)) +
-    coord_cartesian(xlim=c(125, 130), ylim=c(35, 40))#Koreas
-  coord_cartesian(xlim=c(30, 40), ylim=c(30, 35))#PSE
-  coord_cartesian(xlim=c(20, 40), ylim=c(0, 15))#sudan
-  coord_cartesian(xlim=c(30, 40), ylim=c(20, 25))#egypt
-  coord_cartesian(xlim=c(70, 85), ylim=c(30, 40)) # (g) Jammu and Kashmir/Aksai Chin dashed and grey
-	
-  
   plot <-  ggplot(toplot, aes(long, lat)) +  
     geom_polygon(aes(group=group, fill=cat), colour=NA) +
     pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
-    scale_fill_manual(legend.title, values=colors) +
+    scale_fill_manual(legend.title, values=colors2) +
     coord_cartesian(xlim = c(-180, 180)) +
     opts(title = paste(map.title, "\n"), aspect.ratio = 2.2/4, 
          plot.title=theme_text(size=16, hjust=0), 
-       legend.key.size = unit(0.50, "cm"), legend.text=theme_text(size=8), 
-       legend.position=c(0.73, 0.41), legend.justification= c(0.5,1),
-       legend.title=theme_text(size=10, hjust=0), panel.border=theme_blank()) +
-         annotate("text", 70, -54, label=cright, size=2, hjust=0) +
-if(show==TRUE) {
-  windows (12,8)
-  print(plot)
-} 
+         legend.key.size = unit(0.50, "cm"), legend.text=theme_text(size=8), 
+         legend.position=c(0.73, 0.41), legend.justification= c(0.5,1),
+         legend.title=theme_text(size=10, hjust=0), panel.border=theme_blank()) +
+           annotate("text", 70, -54, label=cright, size=2, hjust=0) 
+           if(show==TRUE) {
+             windows (12,8)
+             print(plot)
+           } 
   
   return(plot)
   
