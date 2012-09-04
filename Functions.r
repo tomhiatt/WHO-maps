@@ -107,7 +107,7 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
 # A print-worthy WHO map
 # ----------------------------------------------------------
 
-WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50", legend.position=c(0.73, 0.41)) {
+WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50", zoom='Global') {
   
   # tests to make sure inputs are right
   if(nchar(legend.title)>45) warning("You might want to try and trim your legend title a bit.")
@@ -219,7 +219,22 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
   } else x1 <- colors
     
   colors2 <- c(x1, 'grey90', 'grey75')
-    
+  
+  # Get dimensions
+  if(zoom=='Global'){
+    leg.pos <- c(0.73, 0.41)
+    zoomx <- c(-180, 180)
+    zoomy <- c(min(gworld$lat), max(gworld$lat))
+    a.ratio = 2.2/4
+  }   
+  if(zoom=='WPR'){
+    leg.pos <- c(0.83, 0.75)
+    zoomx <- c(70, 180)
+    zoomy <- c(-50, 55)
+    a.ratio = 5/4
+     } 
+  else(stop(paste(zoom, "is not on my list of zoom level options.")))
+  
   #   Merge data
   toplot <- merge(gworld, data, by.x = "id", by.y = "iso3", all.x=TRUE)  
   toplot <- toplot[order(toplot$order), ]
@@ -236,11 +251,11 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
     scale_fill_manual(legend.title, values=colors2) +
-    coord_cartesian(xlim = c(-180, 180)) +
-    opts(title = paste(map.title, "\n"), aspect.ratio = 2.2/4, 
+    coord_cartesian(xlim = zoomx) +
+    opts(title = paste(map.title, "\n"), aspect.ratio = a.ratio, 
          plot.title=theme_text(size=16, hjust=0), 
          legend.key.size = unit(0.50, "cm"), legend.text=theme_text(size=8), 
-         legend.position=legend.position, legend.justification= c(0.5,1),
+         legend.position=leg.pos, legend.justification= c(0.5,1),
          legend.title=theme_text(size=10, hjust=0), panel.border=theme_blank()) +
            annotate("text", 70, -54, label=cright, size=2, hjust=0) 
            if(show==TRUE) {
