@@ -11,7 +11,7 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
   # tests to make sure inputs are right
   if(nchar(legend.title)>25) warning("You might want to try and trim your legend title a bit.")
   if(nchar(legend.title)>10 & any(grep("\\n", legend.title))==FALSE) warning("You might want to wrap that legend title a couple of times with '\\n'.") 
-  if(nchar(map.title)>50) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
+  if(nchar(map.title)>50 & any(grep("\\n", map.title))==FALSE) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
   if(max(nchar(levels(data[["cat"]]))) > 10) warning("Check if your categories are running into Australia. (I hate it when that happens.)")
   
   if(any(names(data) %in% c("iso3", "cat"))==FALSE) stop("I need the data with just two columns labeled 'iso3' and 'cat' (for category). The cut() function works well for continuous data.")
@@ -107,12 +107,12 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
 # A print-worthy WHO map
 # ----------------------------------------------------------
 
-WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50") {
+WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50", legend.position=c(0.73, 0.41)) {
   
   # tests to make sure inputs are right
   if(nchar(legend.title)>45) warning("You might want to try and trim your legend title a bit.")
   if(nchar(legend.title)>25 & any(grep("\\n", legend.title))==FALSE) warning("You might want to wrap that legend title a couple of times with '\\n'.") 
-  if(nchar(map.title)>100) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
+  if(nchar(map.title)>100 & any(grep("\\n", map.title))==FALSE) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
   if(max(nchar(levels(data[["cat"]]))) > 20 & !any(grep('\n', levels(data[["cat"]])))) warning("Check if your categories are running into Australia. (I hate it when that happens.)")
   
   if(any(names(data) %in% c("iso3", "cat"))==FALSE) stop("I need the data with just two columns labeled 'iso3' and 'cat' (for category).")
@@ -240,7 +240,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     opts(title = paste(map.title, "\n"), aspect.ratio = 2.2/4, 
          plot.title=theme_text(size=16, hjust=0), 
          legend.key.size = unit(0.50, "cm"), legend.text=theme_text(size=8), 
-         legend.position=c(0.73, 0.41), legend.justification= c(0.5,1),
+         legend.position=legend.position, legend.justification= c(0.5,1),
          legend.title=theme_text(size=10, hjust=0), panel.border=theme_blank()) +
            annotate("text", 70, -54, label=cright, size=2, hjust=0) 
            if(show==TRUE) {
