@@ -226,14 +226,13 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     zoomx <- c(-180, 180)
     zoomy <- c(min(gworld$lat), max(gworld$lat))
     a.ratio = 2.2/4
-  }   
+  }   else
   if(zoom=='WPR'){
     leg.pos <- c(0.83, 0.75)
     zoomx <- c(70, 180)
     zoomy <- c(-50, 55)
     a.ratio = 5/4
-     } 
-  else(stop(paste(zoom, "is not on my list of zoom level options.")))
+     } else stop(paste(zoom, "is not on my list of zoom level options."))
   
   #   Merge data
   toplot <- merge(gworld, data, by.x = "id", by.y = "iso3", all.x=TRUE)  
@@ -251,12 +250,12 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
     scale_fill_manual(legend.title, values=colors2) +
-    coord_cartesian(xlim = zoomx) +
-    opts(title = paste(map.title, "\n"), aspect.ratio = a.ratio, 
-         plot.title=theme_text(size=16, hjust=0), 
-         legend.key.size = unit(0.50, "cm"), legend.text=theme_text(size=8), 
+    coord_cartesian(xlim = zoomx) + labs(title = paste(map.title, "\n")) +
+
+    theme(aspect.ratio = a.ratio, plot.title=element_text(size=16, hjust=0), 
+         legend.key.size = unit(0.50, "cm"), legend.text=element_text(size=8), 
          legend.position=leg.pos, legend.justification= c(0.5,1),
-         legend.title=theme_text(size=10, hjust=0), panel.border=theme_blank()) +
+         legend.title=element_text(size=10, hjust=0), rect=element_blank()) +
            annotate("text", 70, -54, label=cright, size=2, hjust=0) 
            if(show==TRUE) {
              windows (12,8)

@@ -1,8 +1,6 @@
 # Check file for disputed areas 
 # As presented in http://gamapserver.who.int/gho/gis/training/DMF_GIS2010_2_SOPSforWHOMaps.pdf
 
-source("C:/Dropbox/Code/R/.Rprofile")
-
 dta <- subset(n, year==2010)
 dta$cat <- as.factor(dta$g_hbc22)
 
