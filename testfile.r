@@ -1,4 +1,5 @@
 # Check file for disputed areas 
+# And also to see if it works.
 # As presented in http://gamapserver.who.int/gho/gis/training/DMF_GIS2010_2_SOPSforWHOMaps.pdf
 
 dta <- subset(n, year==2010)
