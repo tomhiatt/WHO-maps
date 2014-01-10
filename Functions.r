@@ -153,17 +153,16 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
   })
   
   # Add in missing circles for ASM, PYF, MNP, WLF
-  asm <- subset(gworld, id=="TON")
-  asm$id <- "ASM"
-  asm$group <- "ASM.1"
-  asm$long <- asm$long + 5
-  asm$lat <- asm$lat - 2
+  asm <- subset(gworld, id=="WSM") ; asm$id <- "ASM" ; asm$group <- "ASM.1" ; asm$long <- asm$long + 2 ; asm$lat <- asm$lat - 0.5
+  pyf <- subset(gworld, id=="COK") ; pyf$id <- "PYF" ; pyf$group <- "PYF.1" ; pyf$long <- pyf$long + 10 ; pyf$lat <- pyf$lat + 1
+  mnp <- subset(gworld, id=="GUM") ; mnp$id <- "MNP" ; mnp$group <- "MNP.1" ; mnp$long <- mnp$long + 0.5 ; mnp$lat <- mnp$lat + 2
+  wlf <- subset(gworld, id=="WSM") ; wlf$id <- "WLF" ; wlf$group <- "WLF.1" ; wlf$long <- wlf$long - 5 ; wlf$lat <- wlf$lat - 0.2
   
-  gworld <- rbind(gworld, asm)
+  gworld <- rbind(gworld, asm, pyf, mnp, wlf)
   
   # Bring WPRO islands over to the other side if needed.
   if(zoom=='WPR') {
-    lefties <- c("COK", "NIU", "TON", "WSM", "TKL")
+    lefties <- c("COK", "NIU", "TON", "WSM", "TKL", "ASM", "PYF", "WLF")
     gworld[gworld$id %in% lefties, "long"] <- gworld[gworld$id %in% lefties, "long"] + 360
   } 
   # Generic map parts
@@ -243,7 +242,7 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
   }   else
   if(zoom=='WPR'){
     leg.pos <- c(0.83, 0.95)
-    zoomx <- c(70, 202)
+    zoomx <- c(70, 212)
     zoomy <- c(-50, 55)
     a.ratio = 3.5/4
      } else stop(paste(zoom, "is not on my list of zoom level options."))
