@@ -107,12 +107,12 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
 # A print-worthy WHO map
 # ----------------------------------------------------------
 
-WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50", zoom='Global') {
+WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data', copyright=TRUE, show=TRUE, line.color="grey50", zoom='Global') {
   
   # tests to make sure inputs are right
   if(nchar(legend.title)>45) warning("You might want to try and trim your legend title a bit.")
   if(nchar(legend.title)>25 & any(grep("\\n", legend.title))==FALSE) warning("You might want to wrap that legend title a couple of times with '\\n'.") 
-  if(any(!is.null(map.title) & nchar(map.title) > 100 & any(grep("\\n", map.title))==FALSE)) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
+  if(nchar(map.title)>100 & any(grep("\\n", map.title))==FALSE) warning("You might want to try and trim your title a bit or wrap it with '\\n'.")
   if(max(nchar(levels(data[["cat"]]))) > 20 & !any(grep('\n', levels(data[["cat"]])))) warning("Check if your categories are running into Australia. (I hate it when that happens.)")
   
   if(any(names(data) %in% c("iso3", "cat"))==FALSE) stop("I need the data with just two columns labeled 'iso3' and 'cat' (for category).")
@@ -125,7 +125,6 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
   
   require(ggplot2)
   require(maptools)
-  require(gpclib)
   require(plyr)
   require(grid)
   require(scales)
@@ -135,10 +134,12 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
   # ----------------------------------------------------
   
   if(is.null(shapefiles.path)){
-    library(whomap)
+    load("D:/Users/hiattt/Dropbox/Code/Maps/WHO-maps/gpart.Rdata")
   }  else({
     old_path <- getwd()
     setwd (shapefiles.path)
+    
+    require(gpclib)
     
     general <- readShapeSpatial("general_2011.shp")
     general_poly <- readShapeSpatial("maskpoly_general_2011.shp")  
@@ -152,19 +153,6 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
     setwd(old_path) 
   })
   
-  # Add in missing circles for ASM, PYF, MNP, WLF
-  asm <- subset(gworld, id=="WSM") ; asm$id <- "ASM" ; asm$group <- "ASM.1" ; asm$long <- asm$long + 2 ; asm$lat <- asm$lat - 0.5
-  pyf <- subset(gworld, id=="COK") ; pyf$id <- "PYF" ; pyf$group <- "PYF.1" ; pyf$long <- pyf$long + 10 ; pyf$lat <- pyf$lat + 1
-  mnp <- subset(gworld, id=="GUM") ; mnp$id <- "MNP" ; mnp$group <- "MNP.1" ; mnp$long <- mnp$long + 0.5 ; mnp$lat <- mnp$lat + 2
-  wlf <- subset(gworld, id=="WSM") ; wlf$id <- "WLF" ; wlf$group <- "WLF.1" ; wlf$long <- wlf$long - 5 ; wlf$lat <- wlf$lat - 0.2
-  
-  gworld <- rbind(gworld, asm, pyf, mnp, wlf)
-  
-  # Bring WPRO islands over to the other side if needed.
-  if(zoom=='WPR') {
-    lefties <- c("COK", "NIU", "TON", "WSM", "TKL", "ASM", "PYF", "WLF")
-    gworld[gworld$id %in% lefties, "long"] <- gworld[gworld$id %in% lefties, "long"] + 360
-  } 
   # Generic map parts
   
 #   drop lines that would be whited out. 
@@ -241,12 +229,12 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
     a.ratio = 2.2/4
   }   else
   if(zoom=='WPR'){
-    leg.pos <- c(0.83, 0.95)
-    zoomx <- c(70, 212)
+    leg.pos <- c(0.83, 0.75)
+    zoomx <- c(70, 180)
     zoomy <- c(-50, 55)
-    a.ratio = 3.5/4
+    a.ratio = 5/4
      } else stop(paste(zoom, "is not on my list of zoom level options."))
-
+  
   #   Merge data
   toplot <- merge(gworld, data, by.x = "id", by.y = "iso3", all.x=TRUE)  
   toplot <- toplot[order(toplot$order), ]
@@ -263,7 +251,7 @@ WHOmap.print <- function(data, map.title=NULL, legend.title="", colors=NULL, low
     pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
     scale_fill_manual(legend.title, values=colors2) +
-    coord_cartesian(xlim = zoomx, ylim=zoomy) + labs(title = map.title) +
+    coord_cartesian(xlim = zoomx) + labs(title = paste(map.title, "\n")) +
 
     theme(aspect.ratio = a.ratio, plot.title=element_text(size=16, hjust=0), 
          legend.key.size = unit(0.50, "cm"), legend.text=element_text(size=8), 
