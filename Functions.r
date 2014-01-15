@@ -134,7 +134,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
   # ----------------------------------------------------
   
   if(is.null(shapefiles.path)){
-    load("D:/Users/hiattt/Dropbox/Code/Maps/WHO-maps/gpart.Rdata")
+    load("D:/Users/hiattt/Dropbox/Code/Maps/WHO-maps/gparts.Rdata")
   }  else({
     old_path <- getwd()
     setwd (shapefiles.path)
@@ -152,6 +152,20 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     
     setwd(old_path) 
   })
+  
+  # Add in missing circles for ASM, PYF, MNP, WLF
+  asm <- subset(gworld, id=="WSM") ; asm$id <- "ASM" ; asm$group <- "ASM.1" ; asm$long <- asm$long + 2 ; asm$lat <- asm$lat - 0.5
+  pyf <- subset(gworld, id=="COK") ; pyf$id <- "PYF" ; pyf$group <- "PYF.1" ; pyf$long <- pyf$long + 10 ; pyf$lat <- pyf$lat + 1
+  mnp <- subset(gworld, id=="GUM") ; mnp$id <- "MNP" ; mnp$group <- "MNP.1" ; mnp$long <- mnp$long + 0.5 ; mnp$lat <- mnp$lat + 2
+  wlf <- subset(gworld, id=="WSM") ; wlf$id <- "WLF" ; wlf$group <- "WLF.1" ; wlf$long <- wlf$long - 5 ; wlf$lat <- wlf$lat - 0.2
+  
+  gworld <- rbind(gworld, asm, pyf, mnp, wlf)
+  
+  # Bring WPRO islands over to the other side if needed.
+  if(zoom=='WPR') {
+    lefties <- c("COK", "NIU", "TON", "WSM", "TKL", "ASM", "PYF", "WLF")
+    gworld[gworld$id %in% lefties, "long"] <- gworld[gworld$id %in% lefties, "long"] + 360
+  } 
   
   # Generic map parts
   
@@ -229,10 +243,10 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     a.ratio = 2.2/4
   }   else
   if(zoom=='WPR'){
-    leg.pos <- c(0.83, 0.75)
-    zoomx <- c(70, 180)
+    leg.pos <- c(0.83, 0.95)
+    zoomx <- c(70, 212)
     zoomy <- c(-50, 55)
-    a.ratio = 5/4
+    a.ratio = 3.5/4
      } else stop(paste(zoom, "is not on my list of zoom level options."))
   
   #   Merge data
@@ -251,7 +265,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
     scale_fill_manual(legend.title, values=colors2) +
-    coord_cartesian(xlim = zoomx) + labs(title = paste(map.title, "\n")) +
+    coord_cartesian(xlim = zoomx, ylim=zoomy) + labs(title = paste(map.title, "\n")) +
 
     theme(aspect.ratio = a.ratio, plot.title=element_text(size=16, hjust=0), 
          legend.key.size = unit(0.50, "cm"), legend.text=element_text(size=8), 
