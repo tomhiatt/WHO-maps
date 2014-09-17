@@ -5,7 +5,7 @@
 # ----------------------------------------------------------
 # A slide-worthy WHO map
 # ----------------------------------------------------------
-  
+
 WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7',  high.color='#08519C', shapefiles.path=NULL, na.label='No data') {
   
   # tests to make sure inputs are right
@@ -35,21 +35,21 @@ WHOmap.slide <- function(data, map.title="", legend.title="", low.color='#BDD7E7
     library(whomap)
   }
   else({
-  old_path <- getwd()
-  setwd (shapefiles.path)
-  
-  general <- readShapeSpatial("general_2011.shp")
-  general_poly <- readShapeSpatial("maskpoly_general_2011.shp")  
-  general_line <- readShapeSpatial("maskline_general_2011.shp")	
-  
-  gpclibPermit()	
-  gworld <- fortify(general, region = "ISO_3_CODE")
-  gpoly <- fortify(general_poly, region = "AREA")
-  gline <- fortify(general_line, region = "COUNTRY")
-  
-  setwd(old_path) 
+    old_path <- getwd()
+    setwd (shapefiles.path)
+    
+    general <- readShapeSpatial("general_2011.shp")
+    general_poly <- readShapeSpatial("maskpoly_general_2011.shp")  
+    general_line <- readShapeSpatial("maskline_general_2011.shp")	
+    
+    gpclibPermit()	
+    gworld <- fortify(general, region = "ISO_3_CODE")
+    gpoly <- fortify(general_poly, region = "AREA")
+    gline <- fortify(general_line, region = "COUNTRY")
+    
+    setwd(old_path) 
   })
-
+  
   
   # Generic map parts
   
@@ -169,7 +169,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
   
   # Generic map parts
   
-#   drop lines that would be whited out. 
+  #   drop lines that would be whited out. 
   dashiso3s <- c("EGY", "ISR", "KOR", "PRK", "PSE", "SDN", "SSD")
   gworldndash <- subset(gworld, !id %in% dashiso3s)
   gworlddash <- subset(gworld, id %in% dashiso3s)
@@ -193,7 +193,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
   PRK[5:12,'group2'] <- 'PRK.1.2'
   
   gworlddash2 <- rbind(SSD, SDN, EGY, ISR, PSE, KOR, PRK)
-
+  
   # Create solid lines for Jammu Kashmir
   jk1 <- subset(gpoly, id=="Jammu and Kashmir")
   jk1$group2 <- as.character(jk1$group)
@@ -201,7 +201,7 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
   jk1[8:16,'group2'] <- 'Jammu and Kashmir.3'
   jk1[21:22,'group2'] <- 'Jammu and Kashmir.4'
   jk2 <- subset(jk1, group2!='Jammu and Kashmir.1')
-
+  
   pol1 <- geom_polygon(data=gworldndash, aes(group = group), colour = line.color, fill = NA)   # A layer to map all countries (so none are missing.)
   lin0 <- geom_path(data = gworlddash2, aes(group = group2), colour = line.color)
   pol2 <- geom_polygon(data = subset(gpoly, id=="Lakes"), aes(group = group), fill = I("white"), colour = line.color) 	# Adds the polygon layer
@@ -211,13 +211,13 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
   lin1 <- geom_path(data = subset(gline, id %in% 2), aes(group = group), colour = line.color) 					# solid black lines
   lin2 <- geom_path(data = subset(gline, id %in% c(0,3,6,7)), aes(group = group), colour = line.color, linetype = "dashed") 	# dashed white and black lines (now modified to be dashed lines over color of country)
   lin3 <- geom_path(data = subset(gline, id %in% c(1,4,5)), aes(group = group), colour = line.color, linetype = "dashed") 	# dashed black lines
-#   lin4 <- geom_path(data = subset(gline, id %in% c(8)), aes(group = group), colour = "white", linetype = "dotted")   # dotted white lines (8 and 9 are the same!) I'm replacing this with a new line 4...
+  #   lin4 <- geom_path(data = subset(gline, id %in% c(8)), aes(group = group), colour = "white", linetype = "dotted")   # dotted white lines (8 and 9 are the same!) I'm replacing this with a new line 4...
   lin4 <- geom_path(data = jk2, aes(group = group2), colour = line.color)
   thm1 <- scale_y_continuous('', breaks = NULL) 
   thm2 <- scale_x_continuous('', breaks = NULL) 
   thm3 <- theme_bw()
   
-#   Copyright text
+  #   Copyright text
   cright <- ifelse(copyright==FALSE, "", "\uA9 World Health Organization 2011. All rights reserved. 
   The designations employed and the presentation of the material in this publication do not 
   imply the expression of any opinion whatsoever on the part of the World Health Organization 
@@ -232,25 +232,27 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     x <- seq(0, 1, length=length(levels(data[["cat"]])))
     x1 <- seq_gradient_pal(low.color, high.color)(x)
   } else x1 <- colors
-    
+  
   colors2 <- c(x1, 'grey90', 'grey75')
   
   # Get dimensions
   if(zoom=='Global'){
     leg.pos <- c(0.73, 0.41)
+    cpyr.pos <- c(70, -52)
     zoomx <- c(-180, 180)
     zoomy <- c(min(gworld$lat), max(gworld$lat))
     a.ratio = 2.2/4
   }   else
-  if(zoom=='WPR'){
-    leg.pos <- c(0.83, 0.95)
-    zoomx <- c(70, 212)
-    zoomy <- c(-50, 55)
-    a.ratio = 3.5/4
-     } else stop(paste(zoom, "is not on my list of zoom level options."))
+    if(zoom=='WPR'){
+      leg.pos <- c(0.83, 0.95)
+      cpyr.pos <- c(70, -45)
+      zoomx <- c(70, 212)
+      zoomy <- c(-50, 55)
+      a.ratio = 3.5/4
+    } else stop(paste(zoom, "is not on my list of zoom level options."))
   
   #   Merge data
-  toplot <- merge(gworld, data, by.x = "id", by.y = "iso3", all.x=TRUE)  
+  toplot <- merge(gworld[gworld$id %in% c(data$iso3, "ESH"),], data, by.x = "id", by.y = "iso3", all.x=TRUE)  
   toplot <- toplot[order(toplot$order), ]
   levels(toplot$cat) <- c(levels(toplot$cat), na.label, 'Not applicable')
   toplot[is.na(toplot$cat),"cat"] <- na.label
@@ -265,17 +267,17 @@ WHOmap.print <- function(data, map.title="", legend.title="", colors=NULL, low.c
     pol1+pol2+pol3+pol4+pol5+lin0+lin1+lin2+lin3+lin4+thm1+thm2+thm3+ 
     geom_polygon(aes(group=group, fill=cat), toplot[toplot$id %in% c('SWZ', 'LSO'),]) +
     scale_fill_manual(legend.title, values=colors2) +
-    coord_cartesian(xlim = zoomx, ylim=zoomy) + labs(title = paste(map.title, "\n")) +
-
+    coord_cartesian(xlim = zoomx, ylim=zoomy) + labs(title = map.title) +
+    
     theme(aspect.ratio = a.ratio, plot.title=element_text(size=16, hjust=0), 
-         legend.key.size = unit(0.50, "cm"), legend.text=element_text(size=8), 
-         legend.position=leg.pos, legend.justification= c(0.5,1),
-         legend.title=element_text(size=10, hjust=0), rect=element_blank()) +
-           annotate("text", 70, -54, label=cright, size=2, hjust=0) 
-           if(show==TRUE) {
-             windows (12,8)
-             print(plot)
-           } 
+          legend.key.size = unit(0.50, "cm"), legend.text=element_text(size=8), 
+          legend.position=leg.pos, legend.justification= c(0.5,1),
+          legend.title=element_text(size=10, hjust=0), rect=element_blank()) +
+    annotate("text", cpyr.pos[1], cpyr.pos[2], label=cright, size=2, hjust=0) 
+  if(show==TRUE) {
+    windows (12,8)
+    print(plot)
+  } 
   
   return(plot)
   

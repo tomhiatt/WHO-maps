@@ -5,13 +5,15 @@
 dta <- subset(n, year==2010)
 dta$cat <- as.factor(dta$g_hbc22)
 
-dta <- n[n$year==2010,]
+dta <- n[n$year==2010 & n$g_whoregion=="WPR",]
 dta$cat <- cut(dta$tot_newrel,breaks=c(0,10,100,1000,10000,100000,Inf), right=FALSE) 
+dta[dta$iso3=="AUS", "cat"] <- NA
 
 p <- WHOmap.print(data=dta,legend.title="HBCs", map.title="High-burden countries",low.color="red", line.color="black", show=TRUE)
 WHOmap.print(dta)
 WHOmap.print(dta, shapefiles.path="C:/mapfiles/MapTemplate_generalized_2011/Shapefiles")
 
+WHOmap.print(dta, zoom = "WPR")
 
 p <- whomap(dta)
 p <- WHOmap.print(data=dta,legend.title="HBCs", map.title="High-burden countries",low.color="red", line.color="black")
